@@ -1,7 +1,23 @@
-langchain-groq
-pydantic
-chromadb
-pypdf
-sentence-transformers
+# --- Core Framework ---
+streamlit
+python-dotenv
+pydantic>=2.0.0
+
+# --- AI & LangChain ---
 langchain==0.3.10 
 langchain-community==0.3.10
+langchain-groq
+langchain-text-splitters
+groq
+
+# --- Vector Database & Embeddings ---
+chromadb
+sentence-transformers
+huggingface_hub
+
+# --- Specialized RAG Tools ---
+flashrank
+pypdf
+
+# --- Multimedia (Voice & Vision) ---
+streamlit-mic-recorder
