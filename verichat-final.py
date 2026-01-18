@@ -18,7 +18,16 @@ from groq import Groq
 from langchain_community.document_compressors.flashrank_rerank import FlashrankRerank
 from langchain.retrievers import ContextualCompressionRetriever
 
+# Load local .env variables
 load_dotenv()
+
+# --- NEW: LANGSMITH OBSERVABILITY CONFIG ---
+# These enable the "tracing" feature you listed on your resume
+os.environ["LANGCHAIN_TRACING_V2"] = "true"
+os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
+os.environ["LANGCHAIN_PROJECT"] = "VeriSource-AI"
+# This will pull from your .env or Streamlit Secrets
+os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY") 
 
 # --- 1. DATA CONTRACT ---
 class UnifiedAudit(BaseModel):
@@ -45,8 +54,8 @@ def describe_image(image_bytes):
     )
     return chat_completion.choices[0].message.content
 
-# --- 3. THE UNIVERSAL ENGINE ---
-class VeriChatUniversal:
+# --- 3. THE UNIVERSAL ENGINE (Renamed for Branding) ---
+class VeriSourceEngine:
     def __init__(self, file_map):
         self.embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
         self.retrievers = {}
@@ -65,6 +74,7 @@ class VeriChatUniversal:
                 docs = [Document(page_content=data, metadata={"source": label})]
             
             splits = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100).split_documents(docs)
+            # Unique collection for every file to prevent crosstalk
             store = Chroma.from_documents(splits, self.embeddings, collection_name=f"col_{hash(label)}")
             self.retrievers[label] = ContextualCompressionRetriever(
                 base_compressor=compressor, base_retriever=store.as_retriever(search_kwargs={"k": 3})
@@ -88,16 +98,18 @@ class VeriChatUniversal:
             placeholder.markdown(full_ans + "▌")
         placeholder.markdown(full_ans)
         
+        # Step: Perform Audit using Agentic Loop
         audit = await self.auditor.ainvoke(f"Context: {combined_context}\nAnswer: {full_ans}")
         timestamp = datetime.now().strftime("%H:%M:%S")
         log_entry = f"\n[{timestamp}] QUERY: {query}\nAUDIT: {'✅' if audit.is_verified else '❌'} {audit.audit_note}\nANSWER: {full_ans}\n{'-'*50}"
         
         return full_ans, audit.audit_note, audit.is_verified, log_entry
 
-# --- 4. THE TRANSCRIPTION LOGIC ---
+# --- 4. THE TRANSCRIPTION LOGIC (Optimized for Memory) ---
 def transcribe_audio(audio_bytes):
     try:
         client = Groq()
+        # Using io.BytesIO to avoid writing physical files to the server disk
         audio_file = io.BytesIO(audio_bytes)
         audio_file.name = "recording.wav"
         return client.audio.transcriptions.create(file=audio_file, model="whisper-large-v3", response_format="text")
@@ -106,18 +118,18 @@ def transcribe_audio(audio_bytes):
         return None
 
 # --- 5. UI LAYER ---
-st.set_page_config(page_title="VeriChat Universal", layout="wide", page_icon="👁️")
+st.set_page_config(page_title="VeriSource AI", layout="wide", page_icon="👁️")
 
 st.markdown("""<style>
     .audit-card { padding: 15px; border-radius: 10px; background-color: #0b0d14; margin-top: 10px; }
 </style>""", unsafe_allow_html=True)
 
-st.title("👁️ VeriChat Universal Agent")
+st.title("👁️ VeriSource AI Platform")
 
 # Initialize Session States
 if "msgs" not in st.session_state: st.session_state.msgs = []
 if "audit_trail" not in st.session_state: 
-    st.session_state.audit_trail = "VERICHAT SESSION AUDIT LOG\n" + ("="*30) + "\n"
+    st.session_state.audit_trail = "VERISOURCE SESSION AUDIT LOG\n" + ("="*30) + "\n"
 
 with st.sidebar:
     st.header("Multi-Modal Vault")
@@ -132,24 +144,23 @@ with st.sidebar:
                         path = f"tmp_{f.name}"
                         with open(path, "wb") as tmp: tmp.write(f.getbuffer())
                         file_map[f.name] = path
-                    else:
+                    else: # Image handling via Llama 3.2 Vision
                         description = describe_image(f.getvalue())
                         file_map[f"Image: {f.name}"] = description
                 
-                st.session_state.engine = VeriChatUniversal(file_map)
+                # Instantiate Renamed Class
+                st.session_state.engine = VeriSourceEngine(file_map)
                 st.session_state.fcount = len(uploaded_files)
             st.success("Vault Updated")
     
     st.divider()
     st.subheader("Session Management")
     
-    # CLEAR CHAT BUTTON
     if st.button("🗑️ Clear Chat & Logs", use_container_width=True):
         st.session_state.msgs = []
-        st.session_state.audit_trail = "VERICHAT SESSION AUDIT LOG\n" + ("="*30) + "\n"
+        st.session_state.audit_trail = "VERISOURCE SESSION AUDIT LOG\n" + ("="*30) + "\n"
         st.rerun()
 
-    # DOWNLOAD BUTTON
     st.download_button(
         label="📥 Download Audit Trail",
         data=st.session_state.audit_trail,
@@ -168,7 +179,7 @@ if "engine" in st.session_state:
     with c1: 
         voice = mic_recorder(start_prompt="🎤", stop_prompt="🛑", key='v')
     
-    user_q = st.chat_input("Ask anything...")
+    user_q = st.chat_input("Ask anything about your vault...")
 
     if voice and 'bytes' in voice:
         with st.spinner("Transcribing..."): 
@@ -180,7 +191,8 @@ if "engine" in st.session_state:
         with st.chat_message("user"): st.markdown(user_q)
         
         with st.chat_message("assistant"):
-            with st.status("🔍 Auditing Response...", expanded=False):
+            with st.status("🔍 Verifying Factual Grounding...", expanded=False):
+                # FIXED: Unpacking 4 values correctly to support logging
                 ans, note, verified, log_text = asyncio.run(st.session_state.engine.run_universal_query(user_q))
             
             st.session_state.msgs.append({"role": "assistant", "content": ans})
@@ -189,7 +201,7 @@ if "engine" in st.session_state:
             border_color = "#00ffcc" if verified else "#ff4b4b"
             st.markdown(f'''
                 <div class="audit-card" style="border-left: 5px solid {border_color};">
-                    <b>🛡️ Audit Report:</b><br>{note}
+                    <b>🛡️ Security Audit:</b><br>{note}
                 </div>
             ''', unsafe_allow_html=True)
 else:
