@@ -1,0 +1,27 @@
+# --- API Keys & Secrets ---
+.env
+.streamlit/secrets.toml
+
+# --- Python & Environment ---
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+
+# --- Vector Database & Cache ---
+# We ignore these because they should be rebuilt on the server/other machines
+chroma_db/
+.flashrank_cache/
+*.pdf
+tmp_*
+temp_*
+
+# --- OS Specific ---
+.DS_Store
+Thumbs.db
+
+# --- Transcription Temp Files ---
+*.wav
+*.mp3
