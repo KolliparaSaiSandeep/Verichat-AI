@@ -1,0 +1,7 @@
+langchain-groq
+pydantic
+chromadb
+pypdf
+sentence-transformers
+langchain==0.3.10 
+langchain-community==0.3.10
