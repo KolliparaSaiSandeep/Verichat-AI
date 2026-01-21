@@ -20,8 +20,36 @@ VeriSource AI utilizes a high-performance pipeline to ensure factual accuracy an
 * **🛡️ Hallucination Guardrails:** A secondary auditor agent verifies every claim before display.
 * **📜 Audit Trails:** Session logs are recorded and available for download to ensure data transparency.
 
----
 
+
+```mermaid
+graph TD
+    subgraph "1. Multimodal Ingestion"
+        A[User Uploads PDF/Image] --> B{File Type?}
+        B -- PDF --> C[PyPDFLoader: Text]
+        B -- Image --> D[Llama 3.2 Vision: Visual Description]
+        C --> E[RecursiveSplitter]
+        D --> E
+    end
+
+    subgraph "2. Vector Intelligence"
+        E --> F[HuggingFace Embeddings]
+        F --> G[(ChromaDB)]
+    end
+
+    subgraph "3. Agentic Retrieval"
+        H[Query] --> I[Vector Search]
+        I --> J[FlashRank Reranking]
+        J --> K[Llama 3.3-70B Answer]
+    end
+
+    subgraph "4. Factual Integrity"
+        K --> L{UnifiedAudit Agent}
+        L -- "❌ Fail" --> M[Regenerate]
+        L -- "✅ Pass" --> N[Final Verified Response]
+        N --> O[LangSmith Tracing]
+    end
+```
 ## ## 🛠️ Technical Stack
 | Category | Technology |
 | :--- | :--- |
