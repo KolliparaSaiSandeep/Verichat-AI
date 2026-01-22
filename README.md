@@ -2,6 +2,8 @@
 
 > **Live Demo:** [verichat-ai.streamlit.app](https://verichat-ai.streamlit.app/)  
 > **Observability:** [LangSmith Public Trace](https://smith.langchain.com/public/deb15ebb-f273-4024-aa98-0211a125940a/r)
+<img width="425" height="424" alt="image" src="https://github.com/user-attachments/assets/5e45e4a4-e3db-4084-950a-1068b7eb84a3" />
+
 
 ## ## 🏗️ System Architecture
 VeriSource AI utilizes a high-performance pipeline to ensure factual accuracy and low latency. 
